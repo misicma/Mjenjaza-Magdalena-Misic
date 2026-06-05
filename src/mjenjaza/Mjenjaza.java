@@ -4,6 +4,8 @@
  */
 package mjenjaza;
 
+import javax.swing.JOptionPane;
+
 /**
  *
  * @author magdalena
@@ -15,6 +17,15 @@ public class Mjenjaza {
      */
     public static void main(String[] args) {
         // TODO code application logic here
+        
+        //Displays a pop-up dialog box to capture the user input
+        String name = JOptionPane.showInputDialog(null, "Please enter your name:" );
+        
+        //Displays a message box with the captured name
+        if (name != null && !name.trim().isEmpty()) {
+            JOptionPane.showMessageDialog(null, "Hello, "+name+"!");
+        }
+        
     }
     
 }
