@@ -4,19 +4,14 @@
  */
 package mjenjaza;
 
-import java.util.Random;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.concurrent.ConcurrentHashMap; //sluzi za pamcenje korisnika
+import java.util.*;
+//sluzi za pamcenje korisnika
 //po principu dictionary iz python-a - key/value
 //ConcurrentHashMap jer je pogodna za prijavu vise korisnika odjednom
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 
 
 /**
@@ -24,49 +19,80 @@ import java.net.Socket;
  * @author magdalena
  */
 public class Server {
-
-    public Server(int port) {
-    }
+    private static Map<String, User> users = new HashMap<>();
     
     public static void main(String[] args){
-        int port = 5000; //Open port
-        List<Integer> cards = new ArrayList<>();
-        Random random = new Random(); //jedan Random objekat za sve
-        private static ConcurrentHashMap<String, Korisnik> korisnici = new ConcurrentHashMap<>();
-        
-        
-        System.out.println("Server is starting and waiting for a client...");
-        
-        try (ServerSocket serverSocket = new ServerSocket(port);
-            Socket clientSocket = serverSocket.accept();
-            InputStreamReader isr = new InputStreamReader(clientSocket.getInputStream());
-            BufferedReader reader = new BufferedReader(isr))    {
+        int port = 5000; //Open port        
+                
+        try (ServerSocket serverSocket = new ServerSocket(port)) {
+            System.out.println("Server is started on port "+port);
             
-            
-            System.out.println("Client connected successfully!");
-            
-            //Read the name sent by the client
-            String receivedName = reader.readLine();
-            System.out.println("Received name from client: "+receivedName);
-            
-            //Generisi 7 karata
-            System.out.println("\n----Generisanje karata-----\n");
-            for (int i=0; i<=7 ;i++){
-                int num_of_doubles = random.nextInt(100) + 1;
-                cards.add(num_of_doubles);
-                System.out.println("You will get card - "+num_of_doubles);
+            while(true) {
+                Socket clientSocket = serverSocket.accept();
+                new Thread(() -> processClient(clientSocket)).start();   
             }
-            
-            System.out.println("All cards are:");
-            for (int i = 0; i < cards.size(); i++) {
-                System.out.println("Card: " + (i+1) + ": " + cards.get(i));
-            }
-            
             
         }   catch(IOException e) {
             System.out.println("Server error: " +e.getMessage());
-        
         }      
+    }
+    
+    private static void processClient(Socket clientSocket) {
+        try (
+            BufferedReader reader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter writer = new PrintWriter(clientSocket.getOutputStream(), true);    
+            ) {
+            
+            //citanje imena korisnika
+            String name = reader.readLine();
+            System.out.println("Received name is: "+name);
+         
+            User user = users.get(name); //svrstava se u listu 
+            
+            if (user == null) {
+                System.out.println("New User - generate...");
+                List<Integer> doubles = generateDoubles(7);
+//                List<Integer> neededCards = generateNeededCards(6,doubles);
+                List<Integer> neededCards = null;
+                
+                
+                user = new User(name, doubles, neededCards);
+                users.put(name, user);
+            } else {
+                System.out.println("This user existed!");
+            }
+            
+            writer.println("DOUBLES: "+user.doubles+";NEEDED CARDS: "+user.neededCards);
+           
+        } catch(IOException e) {
+            System.out.println("Error in processing: "+e.getMessage());
+        }
+        
+    }
+    
+    private static List<Integer> generateDoubles(int num) {
+        List<Integer> list = new ArrayList<>();
+        Random random = new Random();
+        while(list.size() < num) {
+            int numCard = random.nextInt(99) + 1;
+            if(!list.contains(numCard)) {
+                list.add(numCard);
+            }
+        }
+        return list;
+    }
+  
+}
+
+class User {
+    String name;
+    List<Integer> doubles;
+    List<Integer> neededCards;
+    
+    User(String name, List<Integer> doubles, List<Integer> neededCards) {
+        this.name = name;
+        this.doubles = doubles;
+        this.neededCards = neededCards;
     }
 }
 
