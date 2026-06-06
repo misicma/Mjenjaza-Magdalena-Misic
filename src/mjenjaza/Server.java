@@ -12,6 +12,7 @@ import java.util.*;
 import java.io.*;
 
 import java.net.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 /**
@@ -19,7 +20,7 @@ import java.net.*;
  * @author magdalena
  */
 public class Server {
-    private static Map<String, User> users = new HashMap<>();
+    private static Map<String, User> users = new ConcurrentHashMap<>();
     
     public static void main(String[] args){
         int port = 5000; //Open port        
@@ -52,8 +53,8 @@ public class Server {
             if (user == null) {
                 System.out.println("New User - generate...");
                 List<Integer> doubles = generateDoubles(7);
-//                List<Integer> neededCards = generateNeededCards(6,doubles);
-                List<Integer> neededCards = null;
+                List<Integer> neededCards = generateNeededCards(6,doubles);
+//                List<Integer> neededCards = null;
                 
                 
                 user = new User(name, doubles, neededCards);
@@ -62,7 +63,7 @@ public class Server {
                 System.out.println("This user existed!");
             }
             
-            writer.println("DOUBLES: "+user.doubles+";NEEDED CARDS: "+user.neededCards);
+            writer.println("DOUBLES:"+user.doubles+";NEEDED:"+user.neededCards);
            
         } catch(IOException e) {
             System.out.println("Error in processing: "+e.getMessage());
@@ -70,6 +71,7 @@ public class Server {
         
     }
     
+    //Generisanje random duplih karata
     private static List<Integer> generateDoubles(int num) {
         List<Integer> list = new ArrayList<>();
         Random random = new Random();
@@ -77,6 +79,19 @@ public class Server {
             int numCard = random.nextInt(99) + 1;
             if(!list.contains(numCard)) {
                 list.add(numCard);
+            }
+        }
+        return list;
+    }
+    
+    //Generisanje potrebnih karata
+    private static List<Integer> generateNeededCards(int num, List<Integer>doubles) {
+        List<Integer> list = new ArrayList<>();
+        Random random = new Random();
+        while(list.size() < num) {
+            int cardNum = random.nextInt(99) + 1;
+            if(!doubles.contains(cardNum)&& !list.contains(cardNum)) {
+                list.add(cardNum);
             }
         }
         return list;
