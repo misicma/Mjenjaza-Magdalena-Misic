@@ -20,9 +20,11 @@ public class Mjenjaza {
      * @param args the command line arguments
      */
         // Promjenljive koje će nam trebati u cijelom programu
+        private static String correctName;
         private static String name;
         private static JPanel panelDoubles;
         private static JPanel panelNeeded;
+        private static JTextArea log;
         private static java.util.List<JCheckBox> doublesList = new ArrayList<>();
         private static java.util.List<JCheckBox> neededList = new ArrayList<>();
     
@@ -40,8 +42,7 @@ public class Mjenjaza {
             System.exit(0);
         }
         
-        String correctName = name.trim();
-        
+        correctName = name.trim();
         String answerFromServer = "";
         
         try{
@@ -61,19 +62,29 @@ public class Mjenjaza {
         
         // --- 3.GLAVNI PROZOR ---
         JFrame frame = new JFrame("Exchange -" +correctName);
-        frame.setSize(800,500);
+        frame.setSize(900,550);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
         
-        JTextArea textArea = new JTextArea();
+        JTextArea textArea = new JTextArea(8,30);
         textArea.setEditable(false);
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 14));
+        textArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
         textArea.append("=== Welcome to EXCHANGE ===\n");
         textArea.append("User: " + correctName + "\n");
         textArea.append("============================\n\n");
         textArea.append("Answer From Server:\n");
         textArea.append(answerFromServer + "\n");
+        
+        JScrollPane scrollText = new JScrollPane(textArea);
+        scrollText.setBorder(BorderFactory.createTitledBorder("INFORMATIONS"));
+        
+        log = new JTextArea(10, 30);
+        log.setEditable(false);
+        log.setFont(new Font("Monospaced", Font.PLAIN, 11));
+        
+        JScrollPane scrollLog = new JScrollPane(log);
+        scrollLog.setBorder(BorderFactory.createTitledBorder("LOG"));
         
         // --- PANELI ZA SLICICE
         
@@ -91,6 +102,8 @@ public class Mjenjaza {
         panelNeeded.setLayout(new GridLayout(0,4,5,5));
         panelNeeded.setBorder(BorderFactory.createTitledBorder("NEEDED"));
         panelNeeded.setBackground(new Color(255,229,220));
+        
+        //
         
         //PARSIRANJE ODGOVORA I DODAVANJE CHECKBOX-OVA
         if(answerFromServer.contains("DOUBLES:") && answerFromServer.contains("NEEDED:")) {
@@ -114,7 +127,7 @@ public class Mjenjaza {
                         JCheckBox cb = new JCheckBox(broj);
                         panelDoubles.add(cb);
                         doublesList.add(cb);
-                        log.append("Dodat duplikat: " + broj + "\n");
+                        log.append("Added doubles: " + broj + "\n");
                     }
                 }
                 
@@ -124,7 +137,7 @@ public class Mjenjaza {
                         JCheckBox cb = new JCheckBox(broj);
                         panelNeeded.add(cb);
                         neededList.add(cb);
-                        log.append("Dodata potrebna: " + broj + "\n");
+                        log.append("Added needed: " + broj + "\n");
                     }
                 }
                 
@@ -158,20 +171,84 @@ public class Mjenjaza {
                 PrintWriter out = new PrintWriter(socket.getOutputStream(),true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                 
-                out.println("GET_USERS");
+                out.println("CALCULATE_EXCHANGE:"+correctName);
                 String answer = in.readLine();
                 socket.close();
                 
-                if(answer!=null && answer.startsWith("USERS_LIST:")) {
-                    String names = answer.replace("USERS_LIST", "");
-                    String[] listOfNames = names.split(",");
+                textArea.append("Answer From Server: "+answer+"\n");
+                
+                if(answer!=null && answer.startsWith("EXCHANGE_RESULT:")) {
+                    String result = answer.replace("EXCHANGE_RESULT:", "");
+                    String[] parts = result.split(";");
+                    
+                    String youGiving = parts[0];
+                    String heGiving = parts[1];
+                    
+                    String message = """
+                                     === EXCHANGE ===
+                                     
+                                     YOU ARE GIVING: """ + youGiving + "\n\n" +
+                            "OTHER USER GIVES: " + heGiving + "\n\n" +
+                            "==========";
+                    
+                    JOptionPane.showMessageDialog(frame, message, "Result of exchange",JOptionPane.INFORMATION_MESSAGE);
+             
+                } else{
+                    textArea.append("There is no other users to exchange!\n");
+                    log.append("No other user found!\n");
+            }
+        
+
+    } catch(Exception ex) {
+        textArea.append("Error: "+ex.getMessage()+"\n");
+        log.append("Error: "+ex.getMessage()+"\n");
+    }
+    
+});
+        
+        btnDelete.addActionListener(e -> {
+            int counter = 0;
+            
+            //Brisanje selektovanih duplikata
+            java.util.Iterator<JCheckBox> itD = doublesList.iterator();
+            while (itD.hasNext()) {
+                JCheckBox cb = itD.next();
+                if(cb.isSelected()) {
+                    panelDoubles.remove(cb);
+                    itD.remove();
+                    counter++;
                 }
             }
+            
+            //Brisanje selektovanih trazenih karata
+            java.util.Iterator<JCheckBox> itN = neededList.iterator();
+            while (itN.hasNext()) {
+                JCheckBox cb = itN.next();
+                if(cb.isSelected()) {
+                    panelNeeded.remove(cb);
+                    itN.remove();
+                    counter++;
+                }
+            }
+            
+            panelDoubles.revalidate();
+            panelDoubles.repaint();
+            panelNeeded.revalidate();
+            panelNeeded.repaint();
+            
+            log.append("Deleted "+counter+"selected stickers\n");
+        
         });
+        
+        frame.add(scrollText, BorderLayout.NORTH);
+        frame.add(middlePanel, BorderLayout.CENTER);
+        frame.add(scrollLog, BorderLayout.EAST);
+        frame.add(bottomPanel, BorderLayout.SOUTH);
         
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         
+        
+        
     }
-    
 }
