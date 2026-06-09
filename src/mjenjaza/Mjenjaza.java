@@ -47,7 +47,7 @@ public class Mjenjaza {
         
         try{
             Socket socket;
-            socket = new Socket("localhost",5000);
+            socket = new Socket("localhost",5000); //addr, port
             PrintWriter writer = new PrintWriter(socket.getOutputStream(),true);
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             
