@@ -15,12 +15,13 @@ import java.net.Socket;
  */
 public class Client {
     public static void main(String [] args) {
-        String serverAdress = "localhost";
-        int port = 5000;
+        String serverAdress = "localhost"; //127.0.0.1 - localhost ip adress
+        int port = 5000; //TCP port
         String nameToSend = "Magdalena";
         
         System.out.println("Attemting to connect to the server...");
         
+        //Server adress ili host
         try(Socket socket = new Socket(serverAdress, port);
             PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
             
@@ -37,3 +38,6 @@ public class Client {
     }
 }
 }
+
+
+//https://chat.deepseek.com/share/eg6wuxc79b7dsqc369
